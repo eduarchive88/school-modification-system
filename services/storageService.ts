@@ -72,6 +72,17 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
 
     if (timetableError) throw timetableError;
 
+    // 디버그: 학기별 데이터 개수 로그
+    try {
+      const studentCounts: Record<number, number> = {};
+      (studentsData || []).forEach((s: any) => { studentCounts[s.semester] = (studentCounts[s.semester] || 0) + 1; });
+      const timetableCounts: Record<number, number> = {};
+      (timetableData || []).forEach((t: any) => { timetableCounts[t.semester] = (timetableCounts[t.semester] || 0) + 1; });
+      console.debug('[storageService.getWorkspace] workspace=', code, 'studentCounts=', studentCounts, 'timetableCounts=', timetableCounts);
+    } catch (e) {
+      console.debug('[storageService.getWorkspace] debug log error', e);
+    }
+
     // 3. 수정 사항 가져오기
     const { data: correctionsData, error: correctionsError } = await supabase
       .from('corrections')
