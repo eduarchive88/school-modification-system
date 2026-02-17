@@ -165,10 +165,12 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
     // 2. 학생 데이터 저장 (트랜잭션 방식)
     if (partialData.students && partialData.students.length > 0) {
       // 먼저 기존 학생 삭제 후 새로 저장
-      await supabase
+      const { error: deleteError } = await supabase
         .from('students')
         .delete()
         .eq('workspace_id', code);
+      
+      if (deleteError) throw deleteError;
 
       const studentRecords = partialData.students.map(s => ({
         workspace_id: code,
@@ -210,11 +212,13 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
 
     // 3. 시간표 데이터 저장
     if (partialData.timetable && partialData.timetable.length > 0) {
-      await supabase
+      const { error: deleteTimeError } = await supabase
         .from('timetable_entries')
         .delete()
         .eq('workspace_id', code)
         .eq('is_manual', false);
+      
+      if (deleteTimeError) throw deleteTimeError;
 
       const timetableRecords = partialData.timetable.map(t => ({
         workspace_id: code,
