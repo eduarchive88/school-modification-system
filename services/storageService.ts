@@ -385,7 +385,7 @@ export const addCorrection = async (code: string, correction: Correction) => {
     console.debug('[storageService.addCorrection] inserted:', data);
   } catch (err) {
     console.error("Add correction error:", err);
-    alert(`수정 사항을 추가하는 중 오류가 발생했습니다. (${err?.message || err})`);
+    alert(`수정 사항을 추가하는 중 오류가 발생했습니다. (${(err as any)?.message || String(err)})`);
   }
 };
 
