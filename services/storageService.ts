@@ -360,7 +360,7 @@ export const addCorrection = async (code: string, correction: Correction) => {
   }
 
   try {
-    const { error } = await supabase.from('corrections').insert({
+    const payload = {
       id: correction.id,
       workspace_id: code,
       student_id: correction.studentId || null,
@@ -374,12 +374,18 @@ export const addCorrection = async (code: string, correction: Correction) => {
       is_completed: correction.isCompleted || false,
       semester: correction.semester || 1,
       created_at: new Date(correction.createdAt).toISOString()
-    });
+    };
 
-    if (error) throw error;
+    console.debug('[storageService.addCorrection] inserting correction payload=', payload);
+    const { data, error } = await supabase.from('corrections').insert(payload).select('*');
+    if (error) {
+      console.error('[storageService.addCorrection] supabase error:', error);
+      throw error;
+    }
+    console.debug('[storageService.addCorrection] inserted:', data);
   } catch (err) {
     console.error("Add correction error:", err);
-    alert("수정 사항을 추가하는 중 오류가 발생했습니다.");
+    alert(`수정 사항을 추가하는 중 오류가 발생했습니다. (${err?.message || err})`);
   }
 };
 
