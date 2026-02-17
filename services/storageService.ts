@@ -210,6 +210,7 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
     
     if (studentsToSave && studentsToSave.length > 0) {
       // 먼저 기존 학생 삭제 후 새로 저장
+      console.debug('[storageService.saveWorkspace] deleting students', { workspace: code, semester });
       const { error: deleteError } = await supabase
         .from('students')
         .delete()
@@ -234,6 +235,8 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
 
       if (studentError) throw studentError;
 
+      console.debug('[storageService.saveWorkspace] inserted students', { workspace: code, semester, count: (insertedStudents || []).length });
+
       // 선택 과목 저장
       if (studentsToSave.some(s => s.electives?.length)) {
         const electiveRecords = studentsToSave.flatMap((s, idx) => {
@@ -248,6 +251,7 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
         });
 
         if (electiveRecords.length > 0) {
+          console.debug('[storageService.saveWorkspace] inserting electives', { workspace: code, semester, count: electiveRecords.length });
           const { error: electiveError } = await supabase
             .from('electives')
             .insert(electiveRecords);
@@ -272,6 +276,7 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
     }
     
     if (timetableToSave && timetableToSave.length > 0) {
+      console.debug('[storageService.saveWorkspace] deleting timetable entries', { workspace: code, semester: timetableSemester });
       const { error: deleteTimeError } = await supabase
         .from('timetable_entries')
         .delete()
@@ -296,6 +301,7 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
         .from('timetable_entries')
         .insert(timetableRecords);
       if (timetableError) throw timetableError;
+      console.debug('[storageService.saveWorkspace] inserted timetable entries', { workspace: code, semester: timetableSemester, count: timetableRecords.length });
     }
 
     // 4. 수동 시간표 저장
