@@ -72,16 +72,25 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
 
   const availableGrades = useMemo(() => {
     const set = new Set<number>();
-    currentSemesterStudents.forEach(s => set.add(s.grade));
+    currentSemesterStudents.forEach(s => {
+      if (typeof s.grade === 'number' && !isNaN(s.grade)) set.add(s.grade);
+    });
     return Array.from(set).sort((a, b) => a - b);
   }, [currentSemesterStudents]);
 
   const availableClasses = useMemo(() => {
     if (selectedGrade === '') return [];
     const set = new Set<number>();
-    currentSemesterStudents.filter(s => s.grade === selectedGrade).forEach(s => set.add(s.class));
+    currentSemesterStudents
+      .filter(s => s.grade === selectedGrade && typeof s.class === 'number' && !isNaN(s.class))
+      .forEach(s => set.add(s.class));
     return Array.from(set).sort((a, b) => a - b);
   }, [selectedGrade, currentSemesterStudents]);
+
+  useEffect(() => {
+    console.debug('[HomeroomView] data.students1:', data?.students1, 'data.students2:', data?.students2, 'selectedSemester:', selectedSemester);
+    console.debug('[HomeroomView] currentSemesterStudents sample:', currentSemesterStudents.slice(0,10));
+  }, [data, selectedSemester, currentSemesterStudents]);
 
   const gradeSpecificElectiveNames = useMemo(() => {
     const map = new Map<number, Set<string>>();
