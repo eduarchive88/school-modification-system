@@ -189,8 +189,19 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
     }
 
     // 2. 학생 데이터 저장 (students, students1, students2 모두 처리)
-    const studentsToSave = partialData.students || partialData.students1 || partialData.students2;
-    const semester = partialData.students1 ? 1 : (partialData.students2 ? 2 : 1);
+    let semester = 1;
+    let studentsToSave = null;
+    
+    if (partialData.students1) {
+      semester = 1;
+      studentsToSave = partialData.students1;
+    } else if (partialData.students2) {
+      semester = 2;
+      studentsToSave = partialData.students2;
+    } else if (partialData.students) {
+      semester = 1;
+      studentsToSave = partialData.students;
+    }
     
     if (studentsToSave && studentsToSave.length > 0) {
       // 먼저 기존 학생 삭제 후 새로 저장
@@ -241,8 +252,19 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
     }
 
     // 3. 시간표 데이터 저장 (timetable, timetable1, timetable2, manualTimetable 모두 처리)
-    const timetableToSave = partialData.timetable || partialData.timetable1 || partialData.timetable2;
-    const timetableSemester = partialData.timetable1 ? 1 : (partialData.timetable2 ? 2 : 1);
+    let timetableSemester = 1;
+    let timetableToSave = null;
+    
+    if (partialData.timetable1) {
+      timetableSemester = 1;
+      timetableToSave = partialData.timetable1;
+    } else if (partialData.timetable2) {
+      timetableSemester = 2;
+      timetableToSave = partialData.timetable2;
+    } else if (partialData.timetable) {
+      timetableSemester = 1;
+      timetableToSave = partialData.timetable;
+    }
     
     if (timetableToSave && timetableToSave.length > 0) {
       const { error: deleteTimeError } = await supabase

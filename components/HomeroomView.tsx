@@ -442,9 +442,9 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
           </div>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
           {[1, 2].map(sem => (
-            <div key={sem} className="space-y-4">
+            <div key={sem} className="space-y-3">
               <h3 className="text-sm font-black text-indigo-600">{sem}학기 데이터</h3>
               <div className="grid grid-cols-2 gap-4 relative">
                 {!isHost && (
@@ -483,10 +483,11 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
               </div>
             </div>
           ))}
-          <div className="md:col-span-2 text-center text-[10px] space-y-1">
-            <button onClick={downloadSampleA} className="block text-indigo-500 hover:underline font-bold">[학생 명단 파일 형식 예시 다운로드]</button>
-            <p className="text-slate-500 font-medium">교사 시간표 양식 다운 경로: [컴시간]-[프로그램]-[교사별 수시표.xlsx]</p>
-          </div>
+        </div>
+        
+        <div className="bg-slate-50 -mx-6 -mb-6 p-6 rounded-b-2xl border-t border-slate-200 space-y-2">
+          <button onClick={downloadSampleA} className="block w-full text-center text-sm text-indigo-600 hover:underline font-bold py-2">[학생 명단 파일 형식 예시 다운로드]</button>
+          <p className="text-center text-xs text-slate-600 font-medium">교사 시간표 양식 다운로드 경로: [컴시간] → [프로그램] → [교사별 수시표.xlsx]</p>
         </div>
       </section>
 
