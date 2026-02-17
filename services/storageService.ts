@@ -136,22 +136,36 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
     const timetable2 = (timetableData2 || []).map(transformTimetable);
     const manualTimetable = (timetableManualData || []).map(transformTimetable);
 
-    const corrections: Correction[] = (correctionsData || []).map(c => ({
-      id: c.id,
-      workspaceCode: c.workspace_id,
-      studentId: c.student_id || '',
-      studentName: c.student_name,
-      gradeClass: c.grade_class,
-      subjectKey: c.subject_key,
-      subjectName: c.subject_name,
-      before: c.before,
-      after: c.after,
-      teachers: c.teachers || [],
-      createdAt: new Date(c.created_at).getTime(),
-      isCompleted: c.is_completed,
-      completedAt: c.completed_at ? new Date(c.completed_at).getTime() : undefined,
-      semester: c.semester
-    }));
+    // Build a lookup from students.uuid -> students.student_id (legacy school id)
+    const studentUuidToLegacy: Record<string, string> = {};
+    (studentsData1 || []).forEach((s: any) => { if (s?.id && s?.student_id) studentUuidToLegacy[s.id] = s.student_id; });
+    (studentsData2 || []).forEach((s: any) => { if (s?.id && s?.student_id) studentUuidToLegacy[s.id] = s.student_id; });
+
+    const corrections: Correction[] = (correctionsData || []).map((c: any) => {
+      // corrections.student_id in the DB may be either a UUID (FK to students.id) or a legacy student_id string
+      let studentIdLegacy = '';
+      if (c.student_id) {
+        const isUuid = typeof c.student_id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.student_id);
+        studentIdLegacy = isUuid ? (studentUuidToLegacy[c.student_id] || '') : String(c.student_id);
+      }
+
+      return {
+        id: c.id,
+        workspaceCode: c.workspace_id,
+        studentId: studentIdLegacy,
+        studentName: c.student_name,
+        gradeClass: c.grade_class,
+        subjectKey: c.subject_key,
+        subjectName: c.subject_name,
+        before: c.before,
+        after: c.after,
+        teachers: c.teachers || [],
+        createdAt: new Date(c.created_at).getTime(),
+        isCompleted: c.is_completed,
+        completedAt: c.completed_at ? new Date(c.completed_at).getTime() : undefined,
+        semester: c.semester
+      } as Correction;
+    });
 
     return {
       password: workspaceInfo?.password,
