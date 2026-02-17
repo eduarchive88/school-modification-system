@@ -3,6 +3,10 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
+  "env": {
+    "VITE_SUPABASE_URL": "https://rvpvmpdmwzmemajbnhkl.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "sb_publishable_NfAmTA5yXwlvjWj_6MW6Mw_BJ00PZWm"
+  },
   "git": {
     "deploymentEnabled": true
   }

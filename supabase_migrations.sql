@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS electives (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
   raw VARCHAR(255) NOT NULL,
-  group VARCHAR(100),
+  subject_group VARCHAR(100),
   subject_name VARCHAR(100) NOT NULL,
   class_num VARCHAR(10),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -96,7 +96,7 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
       class: s.class,
       electives: (s.electives || []).map((e: any) => ({
         raw: e.raw,
-        group: e.group,
+        group: e.subject_group,
         subjectName: e.subject_name,
         classNum: e.class_num
       }))
@@ -193,7 +193,7 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
           return (s.electives || []).map(e => ({
             student_id: studentId,
             raw: e.raw,
-            group: e.group,
+            subject_group: e.group,
             subject_name: e.subjectName,
             class_num: e.classNum
           }));
