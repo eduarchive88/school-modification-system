@@ -46,39 +46,46 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
   }
 
   try {
-    // 1. 학생 데이터 가져오기 (선택 과목 포함)
-    const { data: studentsData, error: studentsError } = await supabase
+    // 1. 학생 데이터 가져오기 (1학기, 2학기 별도 쿼리)
+    const { data: studentsData1, error: studentsError1 } = await supabase
       .from('students')
-      .select(`
-        id,
-        student_id,
-        name,
-        grade,
-        class,
-        semester,
-        electives (*)
-      `)
+      .select(`id, student_id, name, grade, class, semester, electives (*)`)
       .eq('workspace_id', code)
-      .order('semester', { ascending: true });
+      .eq('semester', 1);
+    if (studentsError1) throw studentsError1;
 
-    if (studentsError) throw studentsError;
+    const { data: studentsData2, error: studentsError2 } = await supabase
+      .from('students')
+      .select(`id, student_id, name, grade, class, semester, electives (*)`)
+      .eq('workspace_id', code)
+      .eq('semester', 2);
+    if (studentsError2) throw studentsError2;
 
-    // 2. 시간표 데이터 가져오기 (semester별로)
-    const { data: timetableData, error: timetableError } = await supabase
+    // 2. 시간표 데이터 가져오기 (1학기, 2학기, 수동 separately)
+    const { data: timetableData1, error: timetableError1 } = await supabase
       .from('timetable_entries')
       .select('*')
       .eq('workspace_id', code)
-      .order('semester', { ascending: true });
+      .eq('semester', 1);
+    if (timetableError1) throw timetableError1;
 
-    if (timetableError) throw timetableError;
+    const { data: timetableData2, error: timetableError2 } = await supabase
+      .from('timetable_entries')
+      .select('*')
+      .eq('workspace_id', code)
+      .eq('semester', 2);
+    if (timetableError2) throw timetableError2;
+
+    const { data: timetableManualData, error: timetableManualErr } = await supabase
+      .from('timetable_entries')
+      .select('*')
+      .eq('workspace_id', code)
+      .eq('is_manual', true);
+    if (timetableManualErr) throw timetableManualErr;
 
     // 디버그: 학기별 데이터 개수 로그
     try {
-      const studentCounts: Record<number, number> = {};
-      (studentsData || []).forEach((s: any) => { studentCounts[s.semester] = (studentCounts[s.semester] || 0) + 1; });
-      const timetableCounts: Record<number, number> = {};
-      (timetableData || []).forEach((t: any) => { timetableCounts[t.semester] = (timetableCounts[t.semester] || 0) + 1; });
-      console.debug('[storageService.getWorkspace] workspace=', code, 'studentCounts=', studentCounts, 'timetableCounts=', timetableCounts);
+      console.debug('[storageService.getWorkspace] workspace=', code, 'students1=', (studentsData1 || []).length, 'students2=', (studentsData2 || []).length, 'timetable1=', (timetableData1 || []).length, 'timetable2=', (timetableData2 || []).length, 'manual=', (timetableManualData || []).length);
     } catch (e) {
       console.debug('[storageService.getWorkspace] debug log error', e);
     }
@@ -114,13 +121,8 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
       }))
     });
 
-    const students1 = (studentsData || [])
-      .filter((s: any) => s.semester === 1)
-      .map(transformStudent);
-    
-    const students2 = (studentsData || [])
-      .filter((s: any) => s.semester === 2)
-      .map(transformStudent);
+    const students1 = (studentsData1 || []).map(transformStudent);
+    const students2 = (studentsData2 || []).map(transformStudent);
 
     const transformTimetable = (t: any) => ({
       teacherName: t.teacher_name,
@@ -130,17 +132,9 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
       isCommon: t.is_common
     });
 
-    const timetable1 = (timetableData || [])
-      .filter((t: any) => t.semester === 1 && !t.is_manual)
-      .map(transformTimetable);
-    
-    const timetable2 = (timetableData || [])
-      .filter((t: any) => t.semester === 2 && !t.is_manual)
-      .map(transformTimetable);
-
-    const manualTimetable = (timetableData || [])
-      .filter((t: any) => t.is_manual)
-      .map(transformTimetable);
+    const timetable1 = (timetableData1 || []).map(transformTimetable);
+    const timetable2 = (timetableData2 || []).map(transformTimetable);
+    const manualTimetable = (timetableManualData || []).map(transformTimetable);
 
     const corrections: Correction[] = (correctionsData || []).map(c => ({
       id: c.id,
