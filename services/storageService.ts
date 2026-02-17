@@ -300,10 +300,10 @@ export const deleteCorrection = async (code: string, correctionId: string) => {
   if (!supabase) {
     const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}${code}`);
     const existing = raw ? JSON.parse(raw) : { corrections: [] };
-    const corrections = Array.isArray(existing.corrections) ? existing.corrections : [];
+    const corrections: any[] = Array.isArray(existing.corrections) ? existing.corrections : [];
     localStorage.setItem(`${STORAGE_KEY_PREFIX}${code}`, JSON.stringify({
       ...existing,
-      corrections: corrections.filter(c => c.id !== correctionId)
+      corrections: corrections.filter((c: any) => c.id !== correctionId)
     }));
     return;
   }
@@ -329,10 +329,10 @@ export const updateCorrectionStatus = async (code: string, correctionId: string,
   if (!supabase) {
     const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}${code}`);
     const existing = raw ? JSON.parse(raw) : { corrections: [] };
-    const corrections = Array.isArray(existing.corrections) ? existing.corrections : [];
+    const corrections: any[] = Array.isArray(existing.corrections) ? existing.corrections : [];
     localStorage.setItem(`${STORAGE_KEY_PREFIX}${code}`, JSON.stringify({
       ...existing,
-      corrections: corrections.map(c => c.id === correctionId ? {
+      corrections: corrections.map((c: any) => c.id === correctionId ? {
         ...c,
         isCompleted,
         completedAt: isCompleted ? Date.now() : undefined
