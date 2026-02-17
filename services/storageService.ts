@@ -388,7 +388,6 @@ export const addCorrection = async (code: string, correction: Correction) => {
     }
 
     // If correction.id is not a UUID, omit it so the DB will generate one.
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const payload: any = {
       workspace_id: code,
       student_id: mappedStudentId,
