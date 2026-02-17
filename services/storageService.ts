@@ -387,8 +387,9 @@ export const addCorrection = async (code: string, correction: Correction) => {
       }
     }
 
-    const payload = {
-      id: correction.id,
+    // If correction.id is not a UUID, omit it so the DB will generate one.
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const payload: any = {
       workspace_id: code,
       student_id: mappedStudentId,
       student_name: correction.studentName,
@@ -402,6 +403,9 @@ export const addCorrection = async (code: string, correction: Correction) => {
       semester: correction.semester || 1,
       created_at: new Date(correction.createdAt).toISOString()
     };
+    if (correction.id && uuidRegex.test(correction.id)) {
+      payload.id = correction.id;
+    }
 
     console.debug('[storageService.addCorrection] inserting correction payload=', payload);
     const { data, error } = await supabase.from('corrections').insert(payload).select('*');
