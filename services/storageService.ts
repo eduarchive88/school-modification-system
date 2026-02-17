@@ -58,16 +58,17 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
         semester,
         electives (*)
       `)
-      .eq('workspace_id', code);
+      .eq('workspace_id', code)
+      .order('semester', { ascending: true });
 
     if (studentsError) throw studentsError;
 
-    // 2. 시간표 데이터 가져오기
+    // 2. 시간표 데이터 가져오기 (semester별로)
     const { data: timetableData, error: timetableError } = await supabase
       .from('timetable_entries')
       .select('*')
       .eq('workspace_id', code)
-      .eq('semester', 1);
+      .order('semester', { ascending: true });
 
     if (timetableError) throw timetableError;
 
@@ -88,8 +89,8 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
 
     if (wsError) throw wsError;
 
-    // 5. 데이터 변환
-    const students: Student[] = (studentsData || []).map(s => ({
+    // 5. 데이터 변환 (semester별로 분리)
+    const transformStudent = (s: any) => ({
       id: s.student_id,
       name: s.name,
       grade: s.grade,
@@ -100,15 +101,35 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
         subjectName: e.subject_name,
         classNum: e.class_num
       }))
-    }));
+    });
 
-    const timetable: TimetableEntry[] = (timetableData || []).map(t => ({
+    const students1 = (studentsData || [])
+      .filter((s: any) => s.semester === 1)
+      .map(transformStudent);
+    
+    const students2 = (studentsData || [])
+      .filter((s: any) => s.semester === 2)
+      .map(transformStudent);
+
+    const transformTimetable = (t: any) => ({
       teacherName: t.teacher_name,
       grade: t.grade,
       subjectName: t.subject_name,
       classNum: t.class,
       isCommon: t.is_common
-    }));
+    });
+
+    const timetable1 = (timetableData || [])
+      .filter((t: any) => t.semester === 1 && !t.is_manual)
+      .map(transformTimetable);
+    
+    const timetable2 = (timetableData || [])
+      .filter((t: any) => t.semester === 2 && !t.is_manual)
+      .map(transformTimetable);
+
+    const manualTimetable = (timetableData || [])
+      .filter((t: any) => t.is_manual)
+      .map(transformTimetable);
 
     const corrections: Correction[] = (correctionsData || []).map(c => ({
       id: c.id,
@@ -129,8 +150,13 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
 
     return {
       password: workspaceInfo?.password,
-      students,
-      timetable,
+      students: students1.length > 0 ? students1 : students2,
+      students1,
+      students2,
+      timetable: timetable1.length > 0 ? timetable1 : timetable2,
+      timetable1,
+      timetable2,
+      manualTimetable,
       corrections
     } as WorkspaceData;
   } catch (err) {

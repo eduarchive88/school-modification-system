@@ -483,7 +483,10 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
               </div>
             </div>
           ))}
-          <button onClick={downloadSampleA} className="md:col-span-2 text-center text-[10px] text-indigo-500 hover:underline font-bold">[파일 형식 예시 다운로드]</button>
+          <div className="md:col-span-2 text-center text-[10px] space-y-1">
+            <button onClick={downloadSampleA} className="block text-indigo-500 hover:underline font-bold">[학생 명단 파일 형식 예시 다운로드]</button>
+            <p className="text-slate-500 font-medium">교사 시간표 양식 다운 경로: [컴시간]-[프로그램]-[교사별 수시표.xlsx]</p>
+          </div>
         </div>
       </section>
 
