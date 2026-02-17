@@ -162,23 +162,27 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
       if (wsError) throw wsError;
     }
 
-    // 2. 학생 데이터 저장 (트랜잭션 방식)
-    if (partialData.students && partialData.students.length > 0) {
+    // 2. 학생 데이터 저장 (students, students1, students2 모두 처리)
+    const studentsToSave = partialData.students || partialData.students1 || partialData.students2;
+    const semester = partialData.students1 ? 1 : (partialData.students2 ? 2 : 1);
+    
+    if (studentsToSave && studentsToSave.length > 0) {
       // 먼저 기존 학생 삭제 후 새로 저장
       const { error: deleteError } = await supabase
         .from('students')
         .delete()
-        .eq('workspace_id', code);
+        .eq('workspace_id', code)
+        .eq('semester', semester);
       
       if (deleteError) throw deleteError;
 
-      const studentRecords = partialData.students.map(s => ({
+      const studentRecords = studentsToSave.map(s => ({
         workspace_id: code,
         student_id: s.id,
         name: s.name,
         grade: s.grade,
         class: s.class,
-        semester: 1
+        semester: semester
       }));
 
       const { data: insertedStudents, error: studentError } = await supabase
@@ -189,8 +193,8 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
       if (studentError) throw studentError;
 
       // 선택 과목 저장
-      if (partialData.students.some(s => s.electives?.length)) {
-        const electiveRecords = partialData.students.flatMap((s, idx) => {
+      if (studentsToSave.some(s => s.electives?.length)) {
+        const electiveRecords = studentsToSave.flatMap((s, idx) => {
           const studentId = insertedStudents?.[idx]?.id;
           return (s.electives || []).map(e => ({
             student_id: studentId,
@@ -210,31 +214,54 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
       }
     }
 
-    // 3. 시간표 데이터 저장
-    if (partialData.timetable && partialData.timetable.length > 0) {
+    // 3. 시간표 데이터 저장 (timetable, timetable1, timetable2, manualTimetable 모두 처리)
+    const timetableToSave = partialData.timetable || partialData.timetable1 || partialData.timetable2;
+    const timetableSemester = partialData.timetable1 ? 1 : (partialData.timetable2 ? 2 : 1);
+    
+    if (timetableToSave && timetableToSave.length > 0) {
       const { error: deleteTimeError } = await supabase
         .from('timetable_entries')
         .delete()
         .eq('workspace_id', code)
-        .eq('is_manual', false);
+        .eq('is_manual', false)
+        .eq('semester', timetableSemester);
       
       if (deleteTimeError) throw deleteTimeError;
 
-      const timetableRecords = partialData.timetable.map(t => ({
+      const timetableRecords = timetableToSave.map(t => ({
         workspace_id: code,
         teacher_name: t.teacherName,
         grade: t.grade,
         class: t.classNum,
         subject_name: t.subjectName,
-        is_common: t.isCommon,
+        is_common: t.isCommon || false,
         is_manual: false,
-        semester: 1
+        semester: timetableSemester
       }));
 
       const { error: timetableError } = await supabase
         .from('timetable_entries')
         .insert(timetableRecords);
       if (timetableError) throw timetableError;
+    }
+
+    // 4. 수동 시간표 저장
+    if (partialData.manualTimetable && partialData.manualTimetable.length > 0) {
+      const manualRecords = partialData.manualTimetable.map(t => ({
+        workspace_id: code,
+        teacher_name: t.teacherName,
+        grade: t.grade,
+        class: t.classNum,
+        subject_name: t.subjectName,
+        is_common: false,
+        is_manual: true,
+        semester: 1
+      }));
+
+      const { error: manualError } = await supabase
+        .from('timetable_entries')
+        .insert(manualRecords);
+      if (manualError) throw manualError;
     }
   } catch (err) {
     console.error("Critical Save Error:", err);
