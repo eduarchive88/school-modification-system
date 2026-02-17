@@ -360,10 +360,37 @@ export const addCorrection = async (code: string, correction: Correction) => {
   }
 
   try {
+    // Ensure student_id is a UUID that references students(id).
+    let mappedStudentId: string | null = null;
+    const providedStudentId = correction.studentId || null;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (providedStudentId && uuidRegex.test(providedStudentId)) {
+      mappedStudentId = providedStudentId;
+    } else if (providedStudentId) {
+      // Try to lookup student's UUID by workspace_id + student_id (legacy)
+      try {
+        const { data: matched, error: lookupErr } = await supabase
+          .from('students')
+          .select('id')
+          .eq('workspace_id', code)
+          .eq('student_id', providedStudentId)
+          .maybeSingle();
+        if (lookupErr) {
+          console.warn('[storageService.addCorrection] student lookup error', lookupErr);
+        } else if (matched && (matched as any).id) {
+          mappedStudentId = (matched as any).id;
+        } else {
+          console.warn('[storageService.addCorrection] student not found for provided studentId', providedStudentId);
+        }
+      } catch (e) {
+        console.warn('[storageService.addCorrection] student lookup threw', e);
+      }
+    }
+
     const payload = {
       id: correction.id,
       workspace_id: code,
-      student_id: correction.studentId || null,
+      student_id: mappedStudentId,
       student_name: correction.studentName,
       grade_class: correction.gradeClass,
       subject_key: correction.subjectKey,
