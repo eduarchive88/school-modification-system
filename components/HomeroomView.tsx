@@ -386,40 +386,19 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
       semester: selectedSemester
     };
 
-    console.debug('[HomeroomView] handleAddCorrection ->', { correction });
     setIsSavingCorrection(true);
 
     try {
       const inserted = await addCorrection(workspaceCode, correction);
-      console.debug('[HomeroomView] inserted result=', inserted);
-
-      // refresh and verify the server returned record is visible
-      const ws = await fetchData();
-      console.debug('[HomeroomView] after fetchData, corrections.length=', (ws?.corrections || []).length, 'corrections=', ws?.corrections);
-
-      const matched = (ws?.corrections || []).find(c =>
-        c.studentName === correction.studentName &&
-        c.subjectName === correction.subjectName &&
-        c.before === correction.before &&
-        c.after === correction.after &&
-        c.semester === correction.semester
-      );
-      console.debug('[HomeroomView] matched correction=', matched, 'search criteria=', {
-        studentName: correction.studentName,
-        subjectName: correction.subjectName,
-        before: correction.before,
-        after: correction.after,
-        semester: correction.semester
-      });
-
-      if (!matched) {
-        console.warn('[HomeroomView] added correction not found after refresh', { inserted, correction });
-        alert('정상적으로 저장되지 않았습니다. (서버 반영 실패)');
-      } else {
-        // clear inputs and keep selection
-        setNewCorrection(prev => ({ ...prev, before: '', after: '' }));
-        setSelectedStudentId(selectedStudent.id);
+      
+      if (!inserted) {
+        alert('저장에 실패했습니다. 학생 정보를 확인해주세요.');
+        return;
       }
+
+      await fetchData();
+      setNewCorrection({ subjectKey: '', before: '', after: '' });
+      alert('정정 내역이 저장되었습니다.');
     } catch (err) {
       console.error('[HomeroomView] addCorrection error', err);
       alert('정정 내역 저장 중 오류가 발생했습니다.');

@@ -376,39 +376,25 @@ export const addCorrection = async (code: string, correction: Correction): Promi
   }
 
   try {
-    // Ensure student_id is a UUID that references students(id).
     let mappedStudentId: string | null = null;
     const providedStudentId = correction.studentId || null;
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    console.debug('[storageService.addCorrection] START with providedStudentId=', providedStudentId);
+    
     if (providedStudentId && uuidRegex.test(providedStudentId)) {
       mappedStudentId = providedStudentId;
-      console.debug('[storageService.addCorrection] providedStudentId is already a UUID, using directly');
     } else if (providedStudentId) {
-      // Try to lookup student's UUID by workspace_id + student_id (legacy)
-      console.debug('[storageService.addCorrection] providedStudentId is legacy, attempting lookup in workspace=', code);
-      try {
-        const { data: matched, error: lookupErr } = await supabase
-          .from('students')
-          .select('id')
-          .eq('workspace_id', code)
-          .eq('student_id', providedStudentId)
-          .maybeSingle();
-        if (lookupErr) {
-          console.warn('[storageService.addCorrection] ❌ student lookup error', lookupErr);
-        } else if (matched && (matched as any).id) {
-          mappedStudentId = (matched as any).id;
-          console.debug('[storageService.addCorrection] ✅ student found: legacy=', providedStudentId, 'uuid=', mappedStudentId);
-        } else {
-          console.warn('[storageService.addCorrection] ❌ student not found for provided studentId=', providedStudentId, 'matched=', matched);
-        }
-      } catch (e) {
-        console.warn('[storageService.addCorrection] ❌ student lookup threw', e);
+      const { data: matched } = await supabase
+        .from('students')
+        .select('id')
+        .eq('workspace_id', code)
+        .eq('student_id', providedStudentId)
+        .limit(1);
+      
+      if (matched && matched.length > 0) {
+        mappedStudentId = (matched[0] as any).id;
       }
     }
-    console.debug('[storageService.addCorrection] mappedStudentId after lookup=', mappedStudentId);
 
-    // If correction.id is not a UUID, omit it so the DB will generate one.
     const payload: any = {
       workspace_id: code,
       student_id: mappedStudentId,
@@ -427,13 +413,8 @@ export const addCorrection = async (code: string, correction: Correction): Promi
       payload.id = correction.id;
     }
 
-    console.debug('[storageService.addCorrection] inserting correction payload=', payload);
     const { data, error } = await supabase.from('corrections').insert(payload).select('*');
-    if (error) {
-      console.error('[storageService.addCorrection] supabase error:', error);
-      throw error;
-    }
-    console.debug('[storageService.addCorrection] inserted:', data);
+    if (error) throw error;
     return (data && data[0]) ? data[0] : null;
   } catch (err) {
     console.error("Add correction error:", err);
