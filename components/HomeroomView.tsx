@@ -25,6 +25,7 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingCorrection, setIsSavingCorrection] = useState(false);
   
   const isHost = role === UserRole.HOST;
 
@@ -44,8 +45,10 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
     try {
       const ws = await getWorkspace(workspaceCode);
       setData(ws);
+      return ws;
     } catch (err) {
       console.error("Fetch Data Error:", err);
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -359,9 +362,13 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
       alert('모든 정보를 입력하세요.');
       return;
     }
+
     const available = getAvailableSubjects(selectedStudent);
     const sub = available.find(a => a.key === newCorrection.subjectKey);
-    if (!sub) return;
+    if (!sub) {
+      alert('선택한 과목을 찾을 수 없습니다.');
+      return;
+    }
 
     const teachers = findTeachers(sub.subjectName, sub.classNum, sub.isElective, selectedStudent);
     const correction: Correction = {
@@ -378,9 +385,38 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
       createdAt: Date.now(),
       semester: selectedSemester
     };
-    await addCorrection(workspaceCode, correction);
-    await fetchData();
-    setNewCorrection(prev => ({ ...prev, before: '', after: '' }));
+
+    console.debug('[HomeroomView] handleAddCorrection ->', { correction });
+    setIsSavingCorrection(true);
+
+    try {
+      const inserted = await addCorrection(workspaceCode, correction);
+
+      // refresh and verify the server returned record is visible
+      const ws = await fetchData();
+
+      const matched = (ws?.corrections || []).find(c =>
+        c.studentName === correction.studentName &&
+        c.subjectName === correction.subjectName &&
+        c.before === correction.before &&
+        c.after === correction.after &&
+        c.semester === correction.semester
+      );
+
+      if (!matched) {
+        console.warn('[HomeroomView] added correction not found after refresh', { inserted, correction });
+        alert('정상적으로 저장되지 않았습니다. (서버 반영 실패)');
+      } else {
+        // clear inputs and keep selection
+        setNewCorrection(prev => ({ ...prev, before: '', after: '' }));
+        setSelectedStudentId(selectedStudent.id);
+      }
+    } catch (err) {
+      console.error('[HomeroomView] addCorrection error', err);
+      alert('정정 내역 저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsSavingCorrection(false);
+    }
   };
 
   const handleDeleteCorrection = async (id: string) => {
@@ -600,7 +636,7 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
                         return <span className={isFound ? "text-indigo-600" : "text-rose-500"}>담당: {teachers.join(', ')}</span>;
                       })()}
                     </div>
-                    <button onClick={handleAddCorrection} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-8 rounded-xl text-sm shadow-md transition-all active:scale-95">{selectedSemester}학기 내역 저장</button>
+                    <button onClick={handleAddCorrection} disabled={isSavingCorrection} className={`bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-8 rounded-xl text-sm shadow-md transition-all active:scale-95 ${isSavingCorrection ? 'opacity-60 cursor-wait' : ''}`}>{isSavingCorrection ? '저장 중…' : `${selectedSemester}학기 내역 저장`}</button>
                   </div>
                 </div>
               </div>

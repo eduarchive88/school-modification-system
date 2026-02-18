@@ -361,7 +361,7 @@ export const clearWorkspace = async (code: string) => {
 /**
  * 수정 사항을 추가합니다
  */
-export const addCorrection = async (code: string, correction: Correction) => {
+export const addCorrection = async (code: string, correction: Correction): Promise<any | null> => {
   if (!supabase) {
     const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}${code}`);
     const existing = raw ? JSON.parse(raw) : { corrections: [] };
@@ -370,7 +370,7 @@ export const addCorrection = async (code: string, correction: Correction) => {
       ...existing,
       corrections: [...corrections, correction]
     }));
-    return;
+    return correction;
   }
 
   try {
@@ -427,9 +427,11 @@ export const addCorrection = async (code: string, correction: Correction) => {
       throw error;
     }
     console.debug('[storageService.addCorrection] inserted:', data);
+    return (data && data[0]) ? data[0] : null;
   } catch (err) {
     console.error("Add correction error:", err);
     alert(`수정 사항을 추가하는 중 오류가 발생했습니다. (${(err as any)?.message || String(err)})`);
+    return null;
   }
 };
 
