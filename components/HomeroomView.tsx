@@ -391,9 +391,11 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
 
     try {
       const inserted = await addCorrection(workspaceCode, correction);
+      console.debug('[HomeroomView] inserted result=', inserted);
 
       // refresh and verify the server returned record is visible
       const ws = await fetchData();
+      console.debug('[HomeroomView] after fetchData, corrections.length=', (ws?.corrections || []).length, 'corrections=', ws?.corrections);
 
       const matched = (ws?.corrections || []).find(c =>
         c.studentName === correction.studentName &&
@@ -402,6 +404,13 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
         c.after === correction.after &&
         c.semester === correction.semester
       );
+      console.debug('[HomeroomView] matched correction=', matched, 'search criteria=', {
+        studentName: correction.studentName,
+        subjectName: correction.subjectName,
+        before: correction.before,
+        after: correction.after,
+        semester: correction.semester
+      });
 
       if (!matched) {
         console.warn('[HomeroomView] added correction not found after refresh', { inserted, correction });
