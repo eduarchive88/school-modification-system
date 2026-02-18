@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { parseStudentExcel, parseTimetableExcel, parseCorrectionExcel } from '../utils/parser';
 import { getWorkspace, saveWorkspace, addCorrection, deleteCorrection, restoreCorrectionsFromBackup } from '../services/storageService';
+import { supabase } from '../services/storageService';
 import { Student, TimetableEntry, Correction, WorkspaceData, Elective, UserRole } from '../types';
 import { isSameSubject, normalizeSubjectName, parseGradeClass } from '../utils/normalization';
 
@@ -173,12 +174,32 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
       isCommon: false
     };
 
-    const currentManual = data.manualTimetable || [];
-    await saveWorkspace(workspaceCode, { manualTimetable: [...currentManual, newEntry] });
-    await fetchData();
-    setManualSubject({ grade: '', classNum: '', subjectName: '', teacherName: '' });
-    setShowManualSubjectForm(false);
-    alert(`${grade}학년 ${classNum}반에 [${subjectName}(${teacherName})] 과목이 수동 추가되었습니다.`);
+    setIsUploading(true);
+    try {
+      if (!supabase) {
+        const currentManual = data.manualTimetable || [];
+        await saveWorkspace(workspaceCode, { manualTimetable: [...currentManual, newEntry] });
+      } else {
+        await supabase.from('timetable_entries').insert({
+          workspace_id: workspaceCode,
+          teacher_name: newEntry.teacherName,
+          grade: newEntry.grade,
+          class: newEntry.classNum,
+          subject_name: newEntry.subjectName,
+          is_common: false,
+          is_manual: true,
+          semester: 1
+        });
+      }
+      await fetchData();
+      setManualSubject({ grade: '', classNum: '', subjectName: '', teacherName: '' });
+      setShowManualSubjectForm(false);
+      alert(`${grade}학년 ${classNum}반에 [${subjectName}(${teacherName})] 과목이 수동 추가되었습니다.`);
+    } catch (err) {
+      alert('과목 추가 중 오류가 발생했습니다.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleAddStudent = async () => {
