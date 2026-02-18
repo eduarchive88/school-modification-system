@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { parseStudentExcel, parseTimetableExcel, parseCorrectionExcel } from '../utils/parser';
-import { getWorkspace, saveWorkspace, addCorrection, deleteCorrection } from '../services/storageService';
+import { getWorkspace, saveWorkspace, addCorrection, deleteCorrection, restoreCorrectionsFromBackup } from '../services/storageService';
 import { Student, TimetableEntry, Correction, WorkspaceData, Elective, UserRole } from '../types';
 import { isSameSubject, normalizeSubjectName, parseGradeClass } from '../utils/normalization';
 
@@ -146,36 +146,8 @@ const HomeroomView: React.FC<HomeroomViewProps> = ({ workspaceCode, onBack, role
     if (!e.target.files?.[0]) return;
     setIsUploading(true);
     try {
-      const newCorrectionsFromFile = await parseCorrectionExcel(e.target.files[0], workspaceCode);
-      const existingCorrections = [...(data.corrections || [])];
-      let addCount = 0;
-      let updateCount = 0;
-
-      newCorrectionsFromFile.forEach(nc => {
-        const foundIdx = existingCorrections.findIndex(ec => 
-          ec.studentId === nc.studentId && 
-          ec.semester === nc.semester && 
-          normalizeSubjectName(ec.subjectName) === normalizeSubjectName(nc.subjectName) &&
-          ec.before === nc.before &&
-          ec.after === nc.after
-        );
-
-        if (foundIdx > -1) {
-          if (nc.isCompleted && !existingCorrections[foundIdx].isCompleted) {
-            existingCorrections[foundIdx] = {
-              ...existingCorrections[foundIdx],
-              isCompleted: true,
-              completedAt: nc.completedAt || Date.now()
-            };
-            updateCount++;
-          }
-        } else {
-          existingCorrections.push(nc);
-          addCount++;
-        }
-      });
-
-      await saveWorkspace(workspaceCode, { corrections: existingCorrections });
+      const correctionsFromFile = await parseCorrectionExcel(e.target.files[0], workspaceCode);
+      const { addCount, updateCount } = await restoreCorrectionsFromBackup(workspaceCode, correctionsFromFile);
       await fetchData();
       alert(`복구가 완료되었습니다.\n(신규 추가: ${addCount}건, 완료 상태 업데이트: ${updateCount}건)`);
     } catch (err) {

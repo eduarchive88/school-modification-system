@@ -453,6 +453,59 @@ export const deleteCorrection = async (code: string, correctionId: string) => {
 };
 
 /**
+ * 백업 파일에서 수정 사항을 안전하게 복구합니다 (Race Condition 방지)
+ */
+export const restoreCorrectionsFromBackup = async (code: string, corrections: Correction[]) => {
+  if (!supabase) {
+    const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}${code}`);
+    const existing = raw ? JSON.parse(raw) : { corrections: [] };
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}${code}`, JSON.stringify({
+      ...existing,
+      corrections: [...(existing.corrections || []), ...corrections]
+    }));
+    return { addCount: corrections.length, updateCount: 0 };
+  }
+
+  let addCount = 0;
+  let updateCount = 0;
+
+  try {
+    for (const correction of corrections) {
+      const { data: existing } = await supabase
+        .from('corrections')
+        .select('id, is_completed')
+        .eq('workspace_id', code)
+        .eq('student_name', correction.studentName)
+        .eq('subject_name', correction.subjectName)
+        .eq('before', correction.before)
+        .eq('after', correction.after)
+        .eq('semester', correction.semester)
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        if (correction.isCompleted && !existing[0].is_completed) {
+          await supabase
+            .from('corrections')
+            .update({
+              is_completed: true,
+              completed_at: correction.completedAt ? new Date(correction.completedAt).toISOString() : new Date().toISOString()
+            })
+            .eq('id', existing[0].id);
+          updateCount++;
+        }
+      } else {
+        await addCorrection(code, correction);
+        addCount++;
+      }
+    }
+    return { addCount, updateCount };
+  } catch (err) {
+    console.error("Restore corrections error:", err);
+    throw err;
+  }
+};
+
+/**
  * 수정 사항의 완료 상태를 업데이트합니다
  */
 export const updateCorrectionStatus = async (code: string, correctionId: string, isCompleted: boolean) => {
