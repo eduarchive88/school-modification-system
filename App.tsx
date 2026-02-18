@@ -217,6 +217,12 @@ const App: React.FC = () => {
           <TeacherView workspaceCode={workspaceCode} onBack={goBackToSelect} />
         )}
       </main>
+
+      <footer className="bg-white border-t border-slate-200 py-4 px-6 text-center">
+        <p className="text-sm text-slate-600">
+          만든 사람: 경기도 지구과학 교사 뀨짱 | 문의: <a href="https://open.kakao.com/o/s7hVU65h" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-bold">카카오톡 오픈채팅</a> | 블로그: <a href="https://eduarchive.tistory.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-bold">뀨짱쌤의 교육자료 아카이브</a>
+        </p>
+      </footer>
     </div>
   );
 };
