@@ -14,6 +14,32 @@ const App: React.FC = () => {
   const [delPassword, setDelPassword] = useState('');
 
   const MASTER_PW = '658584';
+  const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5분
+
+  useEffect(() => {
+    if (!workspaceCode) return;
+
+    let inactivityTimer: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        alert('5분간 활동이 없어 자동으로 로그아웃됩니다.');
+        setView(AppState.HOME);
+        setWorkspaceCode('');
+        setUserRole(UserRole.GUEST);
+      }, INACTIVITY_TIMEOUT);
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => window.addEventListener(event, resetTimer));
+    resetTimer();
+
+    return () => {
+      clearTimeout(inactivityTimer);
+      events.forEach(event => window.removeEventListener(event, resetTimer));
+    };
+  }, [workspaceCode]);
 
   useEffect(() => {
     const handleHashChange = () => {
