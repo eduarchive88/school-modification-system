@@ -35,7 +35,7 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
   try {
     const { data, error } = await supabase
       .from('workspaces')
-      .select('data')
+      .select('password, data')
       .eq('id', code)
       .maybeSingle();
 
@@ -43,9 +43,9 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
       console.error("Supabase Fetch Error:", error);
       throw error;
     }
-    
+
     if (!data) return { students: [], timetable: [], corrections: [] };
-    return data.data as WorkspaceData;
+    return { password: data.password, ...(data.data as WorkspaceData) };
   } catch (err: any) {
     console.error("Critical Fetch Error:", err);
     
@@ -123,12 +123,17 @@ export const saveWorkspace = async (code: string, partialData: Partial<Workspace
       return;
     }
 
-    // 4. 안전한 병합 (Merge)
-    const updated = { ...existingInDB, ...partialData };
+    // 4. 안전한 병합 (Merge) - password는 별도 컬럼으로 분리
+    const { password, ...restPartial } = partialData;
+    const { password: _pw, ...existingData } = existingInDB;
+    const updatedData = { ...existingData, ...restPartial };
+
+    const upsertObj: Record<string, unknown> = { id: code, data: updatedData };
+    if (password !== undefined) upsertObj.password = password;
 
     const { error: upsertError } = await supabase
       .from('workspaces')
-      .upsert({ id: code, data: updated }, { onConflict: 'id' });
+      .upsert(upsertObj, { onConflict: 'id' });
       
     if (upsertError) throw upsertError;
   } catch (err) {
