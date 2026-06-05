@@ -47,14 +47,16 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
       } else {
         // 게스트 접속 로직
         if (!ws || !ws.password) {
-          alert("코드가 생성되지 않았습니다.");
+          alert("코드가 생성되지 않았습니다.\n\n호스트(생기부 담당자)가 먼저 워크스페이스를 생성해야 합니다.");
           setIsProcessing(false);
           return;
         }
         onNavigate(AppState.SELECT, code.trim(), UserRole.GUEST);
       }
     } catch (err) {
-      alert("접속 중 오류가 발생했습니다.");
+      // getWorkspace에서 throw된 실제 네트워크/DB 오류
+      console.error("접속 오류:", err);
+      alert("서버 연결 중 오류가 발생했습니다.\n\n잠시 후 다시 시도해주세요.");
     } finally {
       setIsProcessing(false);
     }

@@ -182,7 +182,8 @@ export const getWorkspace = async (code: string): Promise<WorkspaceData> => {
     } as WorkspaceData;
   } catch (err) {
     console.error("Critical Fetch Error:", err);
-    return { students: [], timetable: [], corrections: [] };
+    // [수정] 에러를 상위로 던져서 호출부가 네트워크 오류와 "코드 없음"을 구별하게 함
+    throw err;
   }
 };
 
