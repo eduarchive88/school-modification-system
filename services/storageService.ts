@@ -4,16 +4,10 @@ import { WorkspaceData, Correction } from '../types';
 
 const getSafeEnv = (key: string): string => {
   try {
-    if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
-      return (import.meta as any).env[key] || '';
-    }
-    if (typeof process !== 'undefined' && process.env) {
-      return (process.env as any)[key] || '';
-    }
+    return (import.meta as any).env?.[key] || '';
   } catch (e) {
-    console.error(`Error reading env key ${key}:`, e);
+    return '';
   }
-  return '';
 };
 
 const SUPABASE_URL = getSafeEnv('VITE_SUPABASE_URL');
