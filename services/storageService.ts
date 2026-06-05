@@ -20,7 +20,9 @@ const SUPABASE_URL = getSafeEnv('VITE_SUPABASE_URL');
 const SUPABASE_KEY = getSafeEnv('VITE_SUPABASE_ANON_KEY');
 
 const isValidUrl = SUPABASE_URL && SUPABASE_URL.startsWith('https://');
-export const supabase = (isValidUrl && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+export const supabase = (isValidUrl && SUPABASE_KEY) 
+  ? createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: 'school_records' } }) 
+  : null;
 const STORAGE_KEY_PREFIX = 'teacher_hub_ws_';
 
 export const isCloudConnected = () => !!supabase;
