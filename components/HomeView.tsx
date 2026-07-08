@@ -53,13 +53,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         }
         onNavigate(AppState.SELECT, code.trim(), UserRole.GUEST);
       }
-    } catch (err: any) {
-      console.error("접속 오류:", err);
-      if (err?.message === 'SERVER_DOWN') {
-        alert("☁️ 클라우드 서버가 일시적으로 비활성화 상태입니다.\n\n잠시 후(약 1~2분) 다시 시도해주세요.\n\n※ Supabase 무료 플랜은 7일 미사용 시 자동으로 일시 정지됩니다.");
-      } else {
-        alert("서버 연결 중 오류가 발생했습니다.\n\n네트워크를 확인하고 다시 시도해주세요.");
-      }
+    } catch (err) {
+      alert("접속 중 오류가 발생했습니다.");
     } finally {
       setIsProcessing(false);
     }
@@ -77,7 +72,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           ) : (
             <span className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 text-slate-400 text-[10px] font-black rounded-bl-xl border-l border-b border-slate-100">
               <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
-              로컬 모드 (공유안됨)
+              로칼 모드 (공유안됨)
             </span>
           )}
         </div>
@@ -147,6 +142,31 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           호스트 권한으로만 기초 데이터 수정 및 워크스페이스 삭제가 가능합니다.
         </p>
       </div>
+
+      {/* 푸터 */}
+      <footer className="mt-6 pb-6 text-center">
+        <p className="text-[10px] text-slate-400 mb-1">만든 사람: 경기도 지구과학 교사 <span className="font-bold text-slate-500">궀짱</span></p>
+        <p className="text-[10px] text-slate-400 space-x-2">
+          <span>문의: </span>
+          <a
+            href="https://open.kakao.com/o/s7hVU65h"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-yellow-500 hover:text-yellow-400 font-semibold underline underline-offset-2 transition-colors"
+          >
+            카카오톡 오픈채팅
+          </a>
+          <span>·</span>
+          <a
+            href="https://eduarchive.tistory.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2 transition-colors"
+          >
+            관짱새의 교육자료 아카이브
+          </a>
+        </p>
+      </footer>
     </div>
   );
 };
