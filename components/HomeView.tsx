@@ -72,7 +72,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           ) : (
             <span className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 text-slate-400 text-[10px] font-black rounded-bl-xl border-l border-b border-slate-100">
               <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
-              로칼 모드 (공유안됨)
+              로컬 모드 (공유안됨)
             </span>
           )}
         </div>
@@ -145,7 +145,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
 
       {/* 푸터 */}
       <footer className="mt-6 pb-6 text-center">
-        <p className="text-[10px] text-slate-400 mb-1">만든 사람: 경기도 지구과학 교사 <span className="font-bold text-slate-500">궀짱</span></p>
+        <p className="text-[10px] text-slate-400 mb-1">만든 사람: 경기도 지구과학 교사 <span className="font-bold text-slate-500">뀨짱</span></p>
         <p className="text-[10px] text-slate-400 space-x-2">
           <span>문의: </span>
           <a
@@ -163,7 +163,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             rel="noopener noreferrer"
             className="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2 transition-colors"
           >
-            관짱새의 교육자료 아카이브
+            뀨짱쌤의 교육자료 아카이브
           </a>
         </p>
       </footer>
